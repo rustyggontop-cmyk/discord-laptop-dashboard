@@ -2,19 +2,19 @@ const $ = id => document.getElementById(id);
 const set = (id, value) => $(id).textContent = value;
 const setBar = (id, value) => $(id).style.width = `${Math.min(100, value)}%`;
 
-async function refresh() {
-  try {
-    const s = await (await fetch('/api/status', {cache: 'no-store'})).json();
-    set('host', s.host); set('os', `${s.os} · ${s.kernel}`); set('cpu', `${s.cpu}%`); setBar('cpu-bar', s.cpu);
-    set('cores', `${s.cores} logical cores · load ${s.load.join(', ')}`);
-    set('memory', `${s.memory.percent}%`); setBar('memory-bar', s.memory.percent); set('memory-detail', `${s.memory.used} / ${s.memory.total}`);
-    set('disk', `${s.disk.percent}%`); setBar('disk-bar', s.disk.percent); set('disk-detail', `${s.disk.used} / ${s.disk.total}`);
-    set('uptime', s.uptime); const bot = $('bot'); bot.textContent = s.bot_online ? 'Running' : 'Offline'; bot.className = s.bot_online ? 'good' : 'bad';
-    set('battery', s.battery.available ? `${s.battery.percent}% · ${s.battery.charging ? 'Charging' : 'On battery'}` : 'Not detected');
-    set('updated', `Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`);
-  } catch { set('updated', 'Status refresh failed'); }
+function render(s) {
+  set('host', s.host); set('os', `${s.os} · ${s.kernel}`); set('cpu', `${s.cpu}%`); setBar('cpu-bar', s.cpu);
+  set('cores', `${s.cores} logical cores · load ${s.load.join(', ')}`);
+  set('memory', `${s.memory.percent}%`); setBar('memory-bar', s.memory.percent); set('memory-detail', `${s.memory.used} / ${s.memory.total}`);
+  set('disk', `${s.disk.percent}%`); setBar('disk-bar', s.disk.percent); set('disk-detail', `${s.disk.used} / ${s.disk.total}`);
+  set('uptime', s.uptime); const bot = $('bot'); bot.textContent = s.bot_online ? 'Running' : 'Offline'; bot.className = s.bot_online ? 'good' : 'bad';
+  set('battery', s.battery.available ? `${s.battery.percent}% · ${s.battery.charging ? 'Charging' : 'On battery'}` : 'Not detected');
+  set('updated', `Live · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}`);
 }
-refresh(); setInterval(refresh, 5000);
+
+const stream = new EventSource('/api/events');
+stream.onmessage = event => render(JSON.parse(event.data));
+stream.onerror = () => set('updated', 'Reconnecting to live status…');
 
 let pendingAction;
 const dialog = $('confirm-dialog');

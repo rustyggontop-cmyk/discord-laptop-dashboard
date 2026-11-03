@@ -3,12 +3,14 @@ const set = (id, value) => $(id).textContent = value;
 const setBar = (id, value) => $(id).style.width = `${Math.min(100, value)}%`;
 
 function render(s) {
-  set('host', s.host); set('os', `${s.os} · ${s.kernel}`); set('cpu', `${s.cpu}%`); setBar('cpu-bar', s.cpu);
-  set('cores', `${s.cores} logical cores · load ${s.load.join(', ')}`);
+  set('host', s.host); set('os', `${s.os} · ${s.kernel} · ${s.architecture}`); set('cpu', `${s.cpu}%`); setBar('cpu-bar', s.cpu);
+  set('cores', `${s.physical_cores} cores / ${s.cores} threads · load ${s.load.join(', ')}`);
   set('memory', `${s.memory.percent}%`); setBar('memory-bar', s.memory.percent); set('memory-detail', `${s.memory.used} / ${s.memory.total}`);
   set('disk', `${s.disk.percent}%`); setBar('disk-bar', s.disk.percent); set('disk-detail', `${s.disk.used} / ${s.disk.total}`);
-  set('uptime', s.uptime); const bot = $('bot'); bot.textContent = s.bot_online ? 'Running' : 'Offline'; bot.className = s.bot_online ? 'good' : 'bad';
+  set('uptime', s.uptime); set('python', s.python); set('ram-detail', `${s.memory.used} / ${s.memory.total}`); set('swap-detail', `${s.swap.used} / ${s.swap.total} (${s.swap.percent}%)`); set('disk-overview', `${s.disk.used} / ${s.disk.total} (${s.disk.percent}%)`); const bot = $('bot'); bot.textContent = s.bot_online ? 'Running' : 'Offline'; bot.className = s.bot_online ? 'good' : 'bad';
   set('battery', s.battery.available ? `${s.battery.percent}% · ${s.battery.charging ? 'Charging' : 'On battery'}` : 'Not detected');
+  set('battery-remaining', s.battery.available ? s.battery.remaining : '—');
+  $('temperatures').innerHTML = s.temperatures.length ? s.temperatures.map(t => `<div class="temperature"><span>${t.device}</span><b>${t.current.toFixed(1)}°C</b><small>${t.label}</small></div>`).join('') : '<p class="empty-state">No readable temperature sensors found.</p>';
   set('updated', `Live · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}`);
 }
 

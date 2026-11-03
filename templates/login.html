@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Discord Laptop — Sign in</title><link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body class="login-page"><main class="login-card">
+  <div class="brand-mark">DL</div><p class="eyebrow">SHARDNOTE PRIVATE ACCESS</p>
+  <h1>Discord Laptop</h1><p class="intro">Sign in to view your Debian laptop.</p>
+  <form method="post" novalidate><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" autofocus required>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}<button type="submit">Open dashboard <span>→</span></button></form>
+  <p class="footnote">Private device control · Authorized access only</p>
+</main></body></html>
+

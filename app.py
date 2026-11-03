@@ -61,10 +61,15 @@ def battery():
     value = psutil.sensors_battery()
     if value is None:
         return {"available": False}
+    if value.secsleft in (psutil.POWER_TIME_UNKNOWN, psutil.POWER_TIME_UNLIMITED):
+        remaining = "Unknown"
+    else:
+        remaining = str(timedelta(seconds=max(0, int(value.secsleft))))
     return {
         "available": True,
         "percent": round(value.percent),
         "charging": bool(value.power_plugged),
+        "remaining": remaining,
     }
 
 
@@ -75,8 +80,22 @@ def service_active(name):
     return result.stdout.strip() == "active"
 
 
+def temperature_readings():
+    readings = []
+    try:
+        for sensor, values in psutil.sensors_temperatures().items():
+            device = "CPU" if sensor.startswith("coretemp") else "Wi-Fi" if sensor.startswith("iwlwifi") else "NVMe SSD" if sensor.startswith("nvme") else sensor
+            for value in values:
+                if value.current is not None:
+                    readings.append({"device": device, "label": value.label or device, "current": round(value.current, 1)})
+    except (AttributeError, OSError):
+        pass
+    return readings
+
+
 def system_stats():
     memory = psutil.virtual_memory()
+    swap = psutil.swap_memory()
     disk = psutil.disk_usage("/")
     try:
         load = list(os.getloadavg())
@@ -86,13 +105,18 @@ def system_stats():
         "host": socket.gethostname(),
         "os": platform.freedesktop_os_release().get("PRETTY_NAME", "Debian"),
         "kernel": platform.release(),
+        "architecture": platform.machine(),
+        "python": platform.python_version(),
         "uptime": str(timedelta(seconds=int(time.time() - START_TIME))),
         "cpu": round(psutil.cpu_percent(interval=None), 1),
+        "physical_cores": psutil.cpu_count(logical=False) or 0,
         "cores": psutil.cpu_count(logical=True) or 0,
         "load": [round(item, 2) for item in load],
         "memory": {"percent": round(memory.percent, 1), "used": format_bytes(memory.used), "total": format_bytes(memory.total)},
+        "swap": {"percent": round(swap.percent, 1), "used": format_bytes(swap.used), "total": format_bytes(swap.total)},
         "disk": {"percent": round(disk.percent, 1), "used": format_bytes(disk.used), "total": format_bytes(disk.total)},
         "battery": battery(),
+        "temperatures": temperature_readings(),
         "bot_online": service_active(os.environ.get("BOT_SERVICE", "shardnote-bot.service")),
     }
 

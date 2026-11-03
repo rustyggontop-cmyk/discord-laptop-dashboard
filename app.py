@@ -2,7 +2,7 @@
 
 Run this on the laptop, not GitHub Pages. All secrets live in .env.
 """
-import asyncio
+import json
 import os
 import platform
 import secrets
@@ -14,7 +14,7 @@ from functools import wraps
 
 import psutil
 from dotenv import load_dotenv
-from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, session, stream_with_context, url_for
 from werkzeug.security import check_password_hash
 
 load_dotenv()
@@ -135,6 +135,23 @@ def dashboard():
 @login_required
 def status():
     return jsonify(system_stats())
+
+
+@app.get("/api/events")
+@login_required
+def events():
+    """Push fresh laptop status to the open dashboard once per second."""
+    @stream_with_context
+    def generate():
+        while True:
+            yield f"data: {json.dumps(system_stats())}\n\n"
+            time.sleep(1)
+
+    return Response(
+        generate(),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 def perform_system_action(action):

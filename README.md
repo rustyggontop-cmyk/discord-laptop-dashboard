@@ -19,7 +19,7 @@ Create a password hash (paste the output as `DASHBOARD_PASSWORD_HASH`):
 .venv/bin/python -c "from werkzeug.security import generate_password_hash as h; print(h('choose-a-long-password'))"
 ```
 
-Test it locally with `.venv/bin/gunicorn --bind 127.0.0.1:8123 app:app`.
+Test it locally with `.venv/bin/gunicorn --worker-class gthread --threads 8 --bind 127.0.0.1:8123 app:app`. The dashboard uses a live event stream, so retain the `gthread` worker configuration when creating the systemd service.
 
 ## Allow only the required power actions
 
